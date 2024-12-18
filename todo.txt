@@ -1,0 +1,12 @@
+API Usuário:
+	Feito: Conexão com MongoDB; CRUD user; PATCH activeDebt; GET activeDebt
+	Falta: autenticação de rotas; acessos do usuário para outras apis (acervo de livros, reserva, consultar empréstimo e histórico); Swagger; Criptografia de senha.
+
+API Biblioteca:
+	Feito: Conexão com MongoDB; CRUD livros; rotas de atualização de cópias disponíveis.
+	Falta: autenticação de rotas; acessos da biblioteca para outras apis (operações de empréstimo e multa); Swagger.
+
+API Empréstimo:
+	Feito: Conexão com MongoDB; CRUD empréstimo; CRUD reserva
+	Falta: operações envolvendo outras apis (multa usuário, busca id usuário, busca id livro); Validação de reserva; Swagger; automações de lançamento de multa;
+	rotas de devolução.
