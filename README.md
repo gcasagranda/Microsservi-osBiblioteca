@@ -82,7 +82,7 @@ Este microsserviço:
 
 ---
 ## Arquitetura
-![Diagrama representando a arquitetura]()
+![Diagrama representando a arquitetura](assets/cch.drawio.png)
 ---
 ## Instruções de Uso
 
