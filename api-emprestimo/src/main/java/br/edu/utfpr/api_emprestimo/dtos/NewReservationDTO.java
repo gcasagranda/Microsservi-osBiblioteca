@@ -7,7 +7,6 @@ import jakarta.validation.constraints.FutureOrPresent;
 import java.time.LocalDate;
 
 public record NewReservationDTO(
-        String idUsuario,
         String idLivro,
         @JsonFormat(pattern = "dd-MM-yyyy")
         @FutureOrPresent (message = ("Data de empréstimo não pode ser no passado"))

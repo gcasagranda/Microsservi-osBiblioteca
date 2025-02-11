@@ -10,6 +10,9 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -55,6 +58,7 @@ public class BookController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<?> createBook(@Valid @RequestBody NewBookDTO newBookDTO) {
         Optional<Book> foundBook = bookRepository.findByIsbn(newBookDTO.isbn());
         if (foundBook.isPresent()) {
@@ -68,6 +72,7 @@ public class BookController {
         book.setTotalCopies(newBookDTO.totalCopies());
         book.setAvailableCopies(newBookDTO.totalCopies());
         book.setId(String.valueOf(bookIdSequenceService.generateSequence(Book.class.getSimpleName())));
+        book.setReservedCopies(0);
 
         bookRepository.save(book);
 
@@ -85,7 +90,8 @@ public class BookController {
                     book.getYear(),
                     book.getIsbn(),
                     book.getTotalCopies(),
-                    book.getAvailableCopies()
+                    book.getAvailableCopies(),
+                    book.getReservedCopies()
             );
             books.add(bookDTO);
         }
@@ -107,7 +113,8 @@ public class BookController {
                         book.getYear(),
                         book.getIsbn(),
                         book.getTotalCopies(),
-                        book.getAvailableCopies()))
+                        book.getAvailableCopies(),
+                        book.getReservedCopies()))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(bookDTOs);
     }
@@ -127,7 +134,8 @@ public class BookController {
                         book.getYear(),
                         book.getIsbn(),
                         book.getTotalCopies(),
-                        book.getAvailableCopies()))
+                        book.getAvailableCopies(),
+                        book.getReservedCopies()))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(bookDTOs);
     }
@@ -145,12 +153,33 @@ public class BookController {
                 book.getYear(),
                 book.getIsbn(),
                 book.getTotalCopies(),
-                book.getAvailableCopies()
+                book.getAvailableCopies(),
+                book.getReservedCopies()
+        );
+        return ResponseEntity.ok(bookDTO);
+    }
+
+    @GetMapping(path="/id/{id}")
+    public ResponseEntity<BookDTO> getBooksById(@PathVariable(name="id") String id) {
+        Optional<Book> foundBook = bookRepository.findById(id);
+        if (foundBook.isEmpty())
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        Book book = foundBook.get();
+        BookDTO bookDTO = new BookDTO(
+                book.getId(),
+                book.getTitle(),
+                book.getAuthor(),
+                book.getYear(),
+                book.getIsbn(),
+                book.getTotalCopies(),
+                book.getAvailableCopies(),
+                book.getReservedCopies()
         );
         return ResponseEntity.ok(bookDTO);
     }
 
     @PatchMapping(path="/updateCopies/{id}")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<?> updateCopies(@PathVariable("id") String id, @RequestBody UpdateTotalCopiesDTO updateTotalCopiesDTO) {
         Optional<Book> foundBook = bookRepository.findById(id);
         if (foundBook.isEmpty())
@@ -165,11 +194,13 @@ public class BookController {
                 book.getYear(),
                 book.getIsbn(),
                 book.getTotalCopies(),
-                book.getAvailableCopies()
+                book.getAvailableCopies(),
+                book.getReservedCopies()
         ));
     }
 
-    @PatchMapping(path = "/updateCopies/loan/{id}")
+    @PostMapping(path = "/updateCopies/loan/{id}")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<?> updateAvailableCopiesLoan(@PathVariable("id") String id) {
         Optional<Book> foundBook = bookRepository.findById(id);
         if (foundBook.isEmpty()) {
@@ -186,14 +217,16 @@ public class BookController {
                     book.getYear(),
                     book.getIsbn(),
                     book.getTotalCopies(),
-                    book.getAvailableCopies()
+                    book.getAvailableCopies(),
+                    book.getReservedCopies()
             ));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
 
-    @PatchMapping(path = "/updateCopies/return/{id}")
+    @PostMapping(path = "/updateCopies/return/{id}")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<?> updateAvailableCopiesReturn(@PathVariable("id") String id) {
         Optional<Book> foundBook = bookRepository.findById(id);
         if (foundBook.isEmpty()) {
@@ -210,7 +243,8 @@ public class BookController {
                     book.getYear(),
                     book.getIsbn(),
                     book.getTotalCopies(),
-                    book.getAvailableCopies()
+                    book.getAvailableCopies(),
+                    book.getReservedCopies()
             ));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
@@ -218,6 +252,7 @@ public class BookController {
     }
 
     @DeleteMapping(path = "/{id}")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<String> deleteBook(@PathVariable(name = "id") String id) {
         Optional<Book> optBook = bookRepository.findById(id);
         if (optBook.isEmpty()) {
@@ -228,6 +263,7 @@ public class BookController {
     }
 
     @PutMapping(path="/{id}")
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     public ResponseEntity<?> updateBook(@PathVariable("id") String id, @Valid @RequestBody NewBookDTO bookDTO) {
         Optional<Book> optBook = bookRepository.findById(id);
         if (optBook.isEmpty())
@@ -246,8 +282,39 @@ public class BookController {
                 book.getYear(),
                 book.getIsbn(),
                 book.getTotalCopies(),
-                book.getAvailableCopies()
+                book.getAvailableCopies(),
+                book.getReservedCopies()
         ));
     }
+
+    @PostMapping(path="/updateReserved/{id}/{bool}")
+    @PreAuthorize("hasAuthority('SCOPE_BASIC')")
+    public ResponseEntity<?> updateReservedBook(@PathVariable("id") String id, @PathVariable("bool") boolean bool) {
+        Optional<Book> optBook = bookRepository.findById(id);
+        if(optBook.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Livro não encontrado");
+        }
+        Book book = optBook.get();
+        if (bool) {
+            book.setReservedCopies(book.getReservedCopies() + 1);
+        }
+        else if (!bool) {
+            book.setReservedCopies(book.getReservedCopies() - 1);
+        }
+        bookRepository.save(book);
+        return ResponseEntity.ok("Cópias reservadas atualizadas");
+    }
+
+    @GetMapping("/usuario/id")
+    public String obterUserId(Authentication authentication) {
+        if (authentication.getPrincipal() instanceof Jwt) {
+            Jwt jwt = (Jwt) authentication.getPrincipal();
+            String userId = jwt.getClaimAsString("sub"); // "sub" é o nome padrão para o subject (sujeito), que geralmente contém o ID do usuário.
+            return userId;
+        }
+        return null; // Ou lance uma exceção, caso o token não seja um JWT.
+    }
+
+    //updatereservedcopies scope_basic
 
 }

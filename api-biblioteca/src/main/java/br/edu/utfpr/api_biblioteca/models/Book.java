@@ -14,6 +14,7 @@ public class Book {
     private String isbn;
     private int totalCopies;
     private int availableCopies;
+    private int reservedCopies;
 
     public Book() {
     }
@@ -82,5 +83,13 @@ public class Book {
 
     public void setAvailableCopies(int availableCopies) {
         this.availableCopies = availableCopies;
+    }
+
+    public int getReservedCopies() {
+        return reservedCopies;
+    }
+
+    public void setReservedCopies(int reservedCopies) {
+        this.reservedCopies = reservedCopies;
     }
 }

@@ -11,6 +11,7 @@ public record ReservationDTO(
          @JsonFormat(pattern = "dd-MM-yyyy")
          LocalDate dataEmprestimo,
          @JsonFormat(pattern = "dd-MM-yyyy")
-         LocalDate dataDevolucaoEsperada
+         LocalDate dataDevolucaoEsperada,
+         boolean active
 ) {
 }

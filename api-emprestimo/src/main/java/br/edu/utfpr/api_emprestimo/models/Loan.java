@@ -16,6 +16,7 @@ public class Loan {
     private LocalDate dataDevolucaoEsperada;
     private LocalDate dataRealDevolucao;
     private boolean emprestimoAtivo;
+    private boolean atrasado;
 
     public Loan() {
     }
@@ -86,6 +87,14 @@ public class Loan {
 
     public void setEmprestimoAtivo(boolean emprestimoAtivo) {
         this.emprestimoAtivo = emprestimoAtivo;
+    }
+
+    public boolean isAtrasado() {
+        return atrasado;
+    }
+
+    public void setAtrasado(boolean atrasado) {
+        this.atrasado = atrasado;
     }
 
 }

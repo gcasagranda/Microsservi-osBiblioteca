@@ -14,6 +14,7 @@ public record LoanDTO(
         LocalDate dataDevolucaoEsperada,
         @JsonFormat(pattern = "dd-MM-yyyy")
         LocalDate dataRealDevolucao,
-        boolean emprestimoAtivo
+        boolean emprestimoAtivo,
+        boolean atrasado
 ) {
 }

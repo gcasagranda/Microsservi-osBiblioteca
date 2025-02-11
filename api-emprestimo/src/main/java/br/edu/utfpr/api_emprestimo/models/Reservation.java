@@ -14,16 +14,18 @@ public class Reservation {
     private String idLivro;
     private LocalDate dataEmprestimo;
     private LocalDate dataDevolucaoEsperada;
+    private boolean active;
 
     public Reservation() {
     }
 
-    public Reservation(String id, String idUsuario, String idLivro, LocalDate dataEmprestimo, LocalDate dataDevolucaoEsperada) {
+    public Reservation(String id, String idUsuario, String idLivro, LocalDate dataEmprestimo, LocalDate dataDevolucaoEsperada, boolean active) {
         this.id = id;
         this.idUsuario = idUsuario;
         this.idLivro = idLivro;
         this.dataEmprestimo = dataEmprestimo;
         this.dataDevolucaoEsperada = dataDevolucaoEsperada;
+        this.active = active;
     }
 
     public String getId() {
@@ -64,5 +66,13 @@ public class Reservation {
 
     public void setDataDevolucaoEsperada(LocalDate dataDevolucaoEsperada) {
         this.dataDevolucaoEsperada = dataDevolucaoEsperada;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 }

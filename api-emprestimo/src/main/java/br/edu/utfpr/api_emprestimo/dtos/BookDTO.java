@@ -1,4 +1,4 @@
-package br.edu.utfpr.api_biblioteca.dtos;
+package br.edu.utfpr.api_emprestimo.dtos;
 
 public record BookDTO(
         String id,

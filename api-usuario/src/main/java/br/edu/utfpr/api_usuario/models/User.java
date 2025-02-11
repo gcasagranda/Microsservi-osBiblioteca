@@ -1,8 +1,12 @@
 package br.edu.utfpr.api_usuario.models;
 
+import br.edu.utfpr.api_usuario.enums.RoleType;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.util.List;
 
 @Document("User")
 public class User {
@@ -14,22 +18,23 @@ public class User {
     @Indexed(unique = true, name = "unique_username_index")
     private String username;
 
-
     private String password;
 
     private String fullName;
 
-    private double activeDebt;
+
+    @DBRef
+    private List<Role> roles;
 
     // Construtores
     public User() {}
 
-    public User(String id, String username, String password, String fullName, double activeDebt) {
+    public User(String id, String username, String password, String fullName, List<Role> roles) {
         this.id = id;
         this.username = username;
         this.password = password;
         this.fullName = fullName;
-        this.activeDebt = activeDebt;
+        this.roles = roles; // Initialize roles
     }
 
     // Getters e Setters
@@ -66,11 +71,28 @@ public class User {
         this.fullName = fullName;
     }
 
-    public double getActiveDebt() {
-        return activeDebt;
+
+    public List<Role> getRoles() { // Corrected to return List<Role>
+        return roles;
     }
 
-    public void setActiveDebt(double activeDebt) {
-        this.activeDebt = activeDebt;
+    public void setRoles(List<Role> roles) {
+        this.roles = roles;
+    }
+
+    public List<RoleType> getRoleTypes() { // Returns a List of RoleType
+        if (roles != null && !roles.isEmpty()) {
+            return roles.stream()
+                    .map(role -> {
+                        try {
+                            return RoleType.valueOf(role.getName());
+                        } catch (IllegalArgumentException e) {
+                            return null; // Or handle the invalid role name appropriately
+                        }
+                    })
+                    .filter(roleType -> roleType != null) // Filter out null values
+                    .toList();
+        }
+        return List.of(); // Return empty list
     }
 }
