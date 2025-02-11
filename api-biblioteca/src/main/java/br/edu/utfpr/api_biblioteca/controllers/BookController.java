@@ -6,13 +6,20 @@ import br.edu.utfpr.api_biblioteca.dtos.UpdateTotalCopiesDTO;
 import br.edu.utfpr.api_biblioteca.models.Book;
 import br.edu.utfpr.api_biblioteca.repositories.BookRepository;
 import br.edu.utfpr.api_biblioteca.services.BookIdSequenceService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -22,6 +29,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/books")
+@Tag(name = "Livros", description = "Operações relacionadas a livros")
 public class BookController {
 
     @Autowired
@@ -57,8 +65,29 @@ public class BookController {
         bookRepository.save(book);
     }
 
-    @PostMapping
+    @PostMapping(path = "/")
     @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    @Operation(
+            summary = "Cadastra novo livro no acervo (acesso exclusivo do ADMIN).",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Dados do novo Livro",
+                    required = true,
+                    content = @Content(
+                            schema = @Schema(implementation = NewBookDTO.class)
+                    )
+            ),
+            security = @SecurityRequirement(name = "bearerAuth"),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "201",
+                            description = "Livro {titulo} cadastrado"
+                    ),
+                    @ApiResponse(
+                            responseCode = "409",
+                            description = "Livro já cadastrado"
+                    )
+            }
+    )
     public ResponseEntity<?> createBook(@Valid @RequestBody NewBookDTO newBookDTO) {
         Optional<Book> foundBook = bookRepository.findByIsbn(newBookDTO.isbn());
         if (foundBook.isPresent()) {
@@ -79,7 +108,22 @@ public class BookController {
         return ResponseEntity.status(HttpStatus.CREATED).body("Livro " + book.getTitle() +" cadastrado");
     }
 
-    @GetMapping
+    @GetMapping(path = "/")
+    @Operation(
+            summary = "Lista todos os livros do acervo",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "201",
+                            description = "Retorna array list dos livros no acervo",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    array = @ArraySchema(
+                                            schema = @Schema(implementation = BookDTO.class)
+                                    )
+                            )
+                    )
+            }
+    )
     public ResponseEntity<List<BookDTO>> getAllBooks() {
         List<BookDTO> books = new ArrayList<>();
         for (Book book : bookRepository.findAll()) {
@@ -99,6 +143,34 @@ public class BookController {
     }
 
     @GetMapping(path = "/title/{title}")
+    @Operation(
+            summary = "Retorna resultados da busca de livros pelo título.",
+            parameters = {
+                    @Parameter(
+                            name = "title",
+                            description = "título a ser buscado",
+                            in = ParameterIn.PATH,
+                            required = true,
+                            schema = @Schema(type = "String")
+                    )
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "201",
+                            description = "Array list dos livros encontrados",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    array = @ArraySchema(
+                                            schema = @Schema(implementation = BookDTO.class)
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Nenhum livro encontrado"
+                    )
+            }
+    )
     public ResponseEntity<?> getBooksByTitle(@PathVariable(name="title") String title) {
         List<Book> foundBooks = bookRepository.findByTitle(".*" + title + ".*", "i");
         if (foundBooks.isEmpty()) {
@@ -120,6 +192,34 @@ public class BookController {
     }
 
     @GetMapping(path = "/author/{author}")
+    @Operation(
+            summary = "Retorna resultados da busca de livros pelo autor.",
+            parameters = {
+                    @Parameter(
+                            name = "author",
+                            description = "autor a ser buscado",
+                            in = ParameterIn.PATH,
+                            required = true,
+                            schema = @Schema(type = "String")
+                    )
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "201",
+                            description = "Array list dos livros encontrados",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    array = @ArraySchema(
+                                            schema = @Schema(implementation = BookDTO.class)
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Nenhum livro encontrado"
+                    )
+            }
+    )
     public ResponseEntity<?> getBooksByAuthor(@PathVariable(name="author") String author) {
         List<Book> foundBooks = bookRepository.findByAuthor(".*" + author + ".*", "i");
         if (foundBooks.isEmpty()) {
@@ -141,6 +241,31 @@ public class BookController {
     }
 
     @GetMapping(path="/isbn/{isbn}")
+    @Operation(
+            summary = "Retorna resultados da busca de livros pelo isbn.",
+            parameters = {
+                    @Parameter(
+                            name = "isbn",
+                            description = "isbn a ser buscado",
+                            in = ParameterIn.PATH,
+                            required = true,
+                            schema = @Schema(type = "String")
+                    )
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "201",
+                            description = "Descrição do livro encontrado",
+                            content = @Content(
+                                    schema = @Schema(implementation = BookDTO.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Nenhum livro encontrado"
+                    )
+            }
+    )
     public ResponseEntity<?> getBooksByIsbn(@PathVariable(name="isbn") String isbn) {
         Optional<Book> foundBook = bookRepository.findByIsbn(isbn);
         if (foundBook.isEmpty())
@@ -160,6 +285,31 @@ public class BookController {
     }
 
     @GetMapping(path="/id/{id}")
+    @Operation(
+            summary = "Retorna resultados da busca de livros pelo id.",
+            parameters = {
+                    @Parameter(
+                            name = "id",
+                            description = "id a ser buscado",
+                            in = ParameterIn.PATH,
+                            required = true,
+                            schema = @Schema(type = "String")
+                    )
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "201",
+                            description = "Descrição do livro encontrado",
+                            content = @Content(
+                                    schema = @Schema(implementation = BookDTO.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Nenhum livro encontrado"
+                    )
+            }
+    )
     public ResponseEntity<BookDTO> getBooksById(@PathVariable(name="id") String id) {
         Optional<Book> foundBook = bookRepository.findById(id);
         if (foundBook.isEmpty())
@@ -180,6 +330,39 @@ public class BookController {
 
     @PatchMapping(path="/updateCopies/{id}")
     @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    @Operation(
+            summary = "Atualiza número de cópias totais de um livro (acesso exclusivo do ADMIN).",
+            parameters = {
+                    @Parameter(
+                            name = "id",
+                            description = "id do livro a ser atualizado",
+                            in = ParameterIn.PATH,
+                            required = true,
+                            schema = @Schema(type = "String")
+                    )
+            },
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Novo número de cópias totais",
+                    required = true,
+                    content = @Content(
+                            schema = @Schema(implementation = UpdateTotalCopiesDTO.class)
+                    )
+            ),
+            security = @SecurityRequirement(name = "bearerAuth"),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "201",
+                            description = "Dados do livro atualizado",
+                            content = @Content(
+                                schema = @Schema(implementation = BookDTO.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Livro não encontrado"
+                    )
+            }
+    )
     public ResponseEntity<?> updateCopies(@PathVariable("id") String id, @RequestBody UpdateTotalCopiesDTO updateTotalCopiesDTO) {
         Optional<Book> foundBook = bookRepository.findById(id);
         if (foundBook.isEmpty())
@@ -201,6 +384,36 @@ public class BookController {
 
     @PostMapping(path = "/updateCopies/loan/{id}")
     @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    @Operation(
+            summary = "Diminui em 1 o número de cópias disponíveis de um livro (realização de empréstimo)(apenas ADMIN).",
+            parameters = {
+                    @Parameter(
+                            name = "id",
+                            description = "id do livro a ser alterado",
+                            in = ParameterIn.PATH,
+                            required = true,
+                            schema = @Schema(type = "String")
+                    )
+            },
+            security = @SecurityRequirement(name = "bearerAuth"),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "201",
+                            description = "Descrição do livro atualizado",
+                            content = @Content(
+                                    schema = @Schema(implementation = BookDTO.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Livro não encontrado"
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Erro ao realizar empréstimo"
+                    )
+            }
+    )
     public ResponseEntity<?> updateAvailableCopiesLoan(@PathVariable("id") String id) {
         Optional<Book> foundBook = bookRepository.findById(id);
         if (foundBook.isEmpty()) {
@@ -227,6 +440,36 @@ public class BookController {
 
     @PostMapping(path = "/updateCopies/return/{id}")
     @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    @Operation(
+            summary = "Aumenta em 1 o número de cópias disponíveis de um livro (realização de devolução)(Apenas ADMIN).",
+            parameters = {
+                    @Parameter(
+                            name = "id",
+                            description = "id do livro a ser alterado",
+                            in = ParameterIn.PATH,
+                            required = true,
+                            schema = @Schema(type = "String")
+                    )
+            },
+            security = @SecurityRequirement(name = "bearerAuth"),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "201",
+                            description = "Descrição do livro atualizado",
+                            content = @Content(
+                                    schema = @Schema(implementation = BookDTO.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Livro não encontrado"
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Erro ao realizar devolução"
+                    )
+            }
+    )
     public ResponseEntity<?> updateAvailableCopiesReturn(@PathVariable("id") String id) {
         Optional<Book> foundBook = bookRepository.findById(id);
         if (foundBook.isEmpty()) {
@@ -253,6 +496,29 @@ public class BookController {
 
     @DeleteMapping(path = "/{id}")
     @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    @Operation(
+            summary = "Deleta um livro pelo id (apenas ADMIN).",
+            parameters = {
+                    @Parameter(
+                            name = "id",
+                            description = "id do livro a ser deletado",
+                            in = ParameterIn.PATH,
+                            required = true,
+                            schema = @Schema(type = "String")
+                    )
+            },
+            security = @SecurityRequirement(name = "bearerAuth"),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "201",
+                            description = "Livro deletado com sucesso"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Nenhum livro encontrado"
+                    )
+            }
+    )
     public ResponseEntity<String> deleteBook(@PathVariable(name = "id") String id) {
         Optional<Book> optBook = bookRepository.findById(id);
         if (optBook.isEmpty()) {
@@ -264,6 +530,39 @@ public class BookController {
 
     @PutMapping(path="/{id}")
     @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    @Operation(
+            summary = "Atualiza um livro no acervo pelo seu id (acesso exclusivo do ADMIN).",
+            parameters = {
+                    @Parameter(
+                            name = "id",
+                            description = "id do livro a ser atualizado",
+                            in = ParameterIn.PATH,
+                            required = true,
+                            schema = @Schema(type = "String")
+                    )
+            },
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Dados atualizados do Livro",
+                    required = true,
+                    content = @Content(
+                            schema = @Schema(implementation = NewBookDTO.class)
+                    )
+            ),
+            security = @SecurityRequirement(name = "bearerAuth"),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "201",
+                            description = "Dados atualizados do livro",
+                            content = @Content(
+                                    schema = @Schema(implementation = BookDTO.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Livro não encontrado"
+                    )
+            }
+    )
     public ResponseEntity<?> updateBook(@PathVariable("id") String id, @Valid @RequestBody NewBookDTO bookDTO) {
         Optional<Book> optBook = bookRepository.findById(id);
         if (optBook.isEmpty())
@@ -289,6 +588,36 @@ public class BookController {
 
     @PostMapping(path="/updateReserved/{id}/{bool}")
     @PreAuthorize("hasAuthority('SCOPE_BASIC')")
+    @Operation(
+            summary = "Atualiza o número de cópias reservadas de um livro (reserva) (acesso exclusivo BASIC).",
+            parameters = {
+                    @Parameter(
+                            name = "id",
+                            description = "id do livro a ser atualizado",
+                            in = ParameterIn.PATH,
+                            required = true,
+                            schema = @Schema(type = "String")
+                    ),
+                    @Parameter(
+                            name = "bool",
+                            description = "boolean indicando se cópias devem ser aumentadas (true) ou diminuidas (false) em 1",
+                            in = ParameterIn.PATH,
+                            required = true,
+                            schema = @Schema(type = "Boolean")
+                    )
+            },
+            security = @SecurityRequirement(name = "bearerAuth"),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "201",
+                            description = "Cópias reservadas atualizadas"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Livro não encontrado"
+                    )
+            }
+    )
     public ResponseEntity<?> updateReservedBook(@PathVariable("id") String id, @PathVariable("bool") boolean bool) {
         Optional<Book> optBook = bookRepository.findById(id);
         if(optBook.isEmpty()) {
@@ -298,23 +627,12 @@ public class BookController {
         if (bool) {
             book.setReservedCopies(book.getReservedCopies() + 1);
         }
-        else if (!bool) {
+        else {
             book.setReservedCopies(book.getReservedCopies() - 1);
         }
         bookRepository.save(book);
         return ResponseEntity.ok("Cópias reservadas atualizadas");
     }
 
-    @GetMapping("/usuario/id")
-    public String obterUserId(Authentication authentication) {
-        if (authentication.getPrincipal() instanceof Jwt) {
-            Jwt jwt = (Jwt) authentication.getPrincipal();
-            String userId = jwt.getClaimAsString("sub"); // "sub" é o nome padrão para o subject (sujeito), que geralmente contém o ID do usuário.
-            return userId;
-        }
-        return null; // Ou lance uma exceção, caso o token não seja um JWT.
-    }
-
-    //updatereservedcopies scope_basic
 
 }

@@ -80,15 +80,6 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
-    @GetMapping("/usuario/id")
-    public String obterUserId(Authentication authentication) {
-        if (authentication.getPrincipal() instanceof Jwt) {
-            Jwt jwt = (Jwt) authentication.getPrincipal();
-            String userId = jwt.getClaimAsString("sub"); // "sub" é o nome padrão para o subject (sujeito), que geralmente contém o ID do usuário.
-            return userId;
-        }
-        return null; // Ou lance uma exceção, caso o token não seja um JWT.
-    }
 
     @GetMapping(path="/{id}")
     @PreAuthorize("hasAuthority('SCOPE_ADMIN')")

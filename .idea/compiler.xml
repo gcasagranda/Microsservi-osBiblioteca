@@ -13,7 +13,7 @@
         </processorPath>
         <module name="api-usuario" />
       </profile>
-      <profile name="Annotation profile for api-emprestimo" enabled="true">
+      <profile name="Annotation profile for api-biblioteca" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />

@@ -195,7 +195,7 @@ public class LoanController {
         return ResponseEntity.ok(list);
     }
 
-    @GetMapping(path = "/active/user")
+    @GetMapping(path = "/user/active")
     @PreAuthorize("hasAuthority('SCOPE_BASIC')")
     public ResponseEntity<?> getActiveLoansByUser(Authentication authentication) {
         Jwt jwt = (Jwt) authentication.getPrincipal();
